@@ -9,3 +9,5 @@ app = FastAPI()
 @app.get('/')
 def root():
     return {'message': 'RAG Chatbot API running'}
+
+#chatpot
