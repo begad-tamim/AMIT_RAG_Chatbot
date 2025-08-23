@@ -1,36 +1,32 @@
-import psycopg
-
-def init_vector_db():
-    # Step 1: Connect to PostgreSQL
-    conn = psycopg.connect(
-    dbname="postgres",
-    user="postgres",
-    password="mypassword",   # the password you set during installation
-    host="localhost",
-    port="5432"
-)
 
 
-    # Step 2: Create pgvector extension & table
-    with conn.cursor() as cur:
-        # Enable pgvector extension
-        cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-        
-        # Create a table with a vector column (dimension = 1536, like OpenAI embeddings)
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS documents (
-                id SERIAL PRIMARY KEY,
-                content TEXT,
-                embedding vector(1536)
-            );
-        """)
-        conn.commit()
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-    print("✅ Vector DB schema initialized successfully!")
-    return conn
+def get_connection(dbname="ragdb", user="postgres", password="1234", host="127.0.0.1", port="5432"):
 
-
-# Example usage
+    try:
+        conn = psycopg2.connect(
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            cursor_factory=RealDictCursor  # عشان ترجع النتائج كـ dict بدل tuple
+        )
+        print("✅ Connected to PostgreSQL successfully!")
+        return conn
+    except psycopg2.Error as e:
+        print("❌ Error connecting to PostgreSQL:", e)
+        return None
 if __name__ == "__main__":
-    conn = init_vector_db()
-    conn.close()
+    conn = get_connection()
+    if conn:
+        cur = conn.cursor()
+        cur.execute("SELECT 1;")
+        print(cur.fetchone())
+        cur.close()
+        conn.close()
+
+
+   
