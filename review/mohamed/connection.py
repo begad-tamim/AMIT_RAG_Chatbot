@@ -1,49 +1,30 @@
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
-def get_connection():
+def get_connection(dbname="ragdb", user="postgres", password="1234", host="127.0.0.1", port="5432"):
+
     try:
         conn = psycopg2.connect(
-            database="ragdb",        # your DB name
-            user="postgres",         # your username
-            password="yourpassword", # your password
-            host="127.0.0.1",
-            port="5432"
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            cursor_factory=RealDictCursor  # عشان ترجع النتائج كـ dict بدل tuple
         )
+        print("✅ Connected to PostgreSQL successfully!")
         return conn
     except psycopg2.Error as e:
-        print("❌ Error connecting:", e)
+        print("❌ Error connecting to PostgreSQL:", e)
         return None
-
-
-def create_tables(conn):
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            CREATE EXTENSION IF NOT EXISTS vector;
-
-            CREATE TABLE IF NOT EXISTS documents (
-                id SERIAL PRIMARY KEY,
-                filename TEXT,
-                content TEXT,
-                embedding VECTOR(768)  -- adjust dimension to match your embedding model
-            );
-        """)
-        conn.commit()
-        cur.close()
-        print("✅ Tables created successfully.")
-    except psycopg2.Error as e:
-        print("❌ Error creating tables:", e)
-
-
 if __name__ == "__main__":
     conn = get_connection()
     if conn:
-        print("✅ Connected to PostgreSQL.")
-        create_tables(conn)
+        cur = conn.cursor()
+        cur.execute("SELECT 1;")
+        print(cur.fetchone())
+        cur.close()
         conn.close()
-    else:
-        print("⚠️ Connection failed.")
-
 
 
    
