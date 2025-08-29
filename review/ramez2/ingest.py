@@ -57,4 +57,5 @@ def ingest_docs():
 if __name__ == "__main__":
     chunks = ingest_docs()
     print(chunks[:2])
+
     
