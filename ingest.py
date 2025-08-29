@@ -1,24 +1,21 @@
 import os
-from PyPDF2 import PdfReader
-from pptx import Presentation
+import pdfplumber   # مكتبة قوية للتعامل مع PDF
 
-DOCS_DIR = "AMIT_RAG_Chatbot\docs"
+# حط المسار الكامل للـ docs
+DOCS_DIR = r"D:\Chatbot\AMIT_RAG_Chatbot\docs"
 
 def read_pdf(path):
     text = ""
-    reader = PdfReader(path)
-    for page in reader.pages:
-        text += page.extract_text() + "\n"
+    try:
+        with pdfplumber.open(path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:  # يتأكد إن الصفحة مش فاضية
+                    text += page_text + "\n"
+    except Exception as e:
+        print(f"⚠️ Error reading {path}: {e}")
     return text
 
-def read_pptx(path):
-    text = ""
-    prs = Presentation(path)
-    for slide in prs.slides:
-        for shape in slide.shapes:
-            if hasattr(shape, "text"):
-                text += shape.text + "\n"
-    return text
 
 def chunk_text(text, chunk_size=500, overlap=50):
     words = text.split()
@@ -31,8 +28,13 @@ def chunk_text(text, chunk_size=500, overlap=50):
         start += chunk_size - overlap
     return chunks
 
+
 def ingest_docs():
     all_chunks = []
+
+    if not os.path.exists(DOCS_DIR):
+        print(f"❌ Directory not found: {DOCS_DIR}")
+        return []
 
     docs_files = os.listdir(DOCS_DIR)
 
@@ -40,17 +42,16 @@ def ingest_docs():
         path = os.path.join(DOCS_DIR, file)
         text = ""
 
-        if file.endswith(".pdf"):
+        if file.lower().endswith(".pdf"):
+            print(f"📄 Processing: {file}")
             text = read_pdf(path)
-        elif file.endswith(".pptx"):
-            text = read_pptx(path)
+            if text:
+                chunks = chunk_text(text)
+                all_chunks.extend(chunks)
 
-        if text:
-            chunks = chunk_text(text)   
-            all_chunks.extend(chunks)  
-
-    print(f"✅ Loaded {len(all_chunks)} chunks from {len(docs_files)} files")
+    print(f"✅ Loaded {len(all_chunks)} chunks from {len(docs_files)} files (PDF only)")
     return all_chunks
+
 
 if __name__ == "__main__":
     chunks = ingest_docs()
