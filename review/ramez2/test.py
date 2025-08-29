@@ -43,12 +43,23 @@ else:
             print("👋 Exiting chatbot. Goodbye!")
             break
 
+        # Step 2: Build the final prompt
+        final_prompt = f"""
+{prompt_config['instructions']}
+
+CONTEXT:
+{relevant_context}
+
+QUESTION:
+{question}
+"""
+
         # Step 3: Make the API request
         payload = {
             "contents": [
                 {
                     "parts": [
-                        {"text": prompt_config["instructions"]},
+                        {"text": final_prompt},
                     ]
                 }
             ]
